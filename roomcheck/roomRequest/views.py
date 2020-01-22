@@ -1,13 +1,9 @@
-from django.shortcuts import render
-from rest_framework import viewsets
-from .serializer import RoomSerializer, BuildingSerializer
+from rest_framework import viewsets, status
+from django.http import QueryDict
+from rest_framework.response import Response
+from .serializer import RoomSerializer, BuildingSerializer, EventCreateSerializer, EventViewSerializer
 from .models import Room, Building, Event
-
-# Create your views here.
-from django.http import HttpResponse
-
-def index(request):
-    return HttpResponse("Hello, world")
+from .scraper import *
 
 class RoomView(viewsets.ModelViewSet):
     serializer_class = RoomSerializer
@@ -16,3 +12,48 @@ class RoomView(viewsets.ModelViewSet):
 class BuildingView(viewsets.ModelViewSet):
     serializer_class = BuildingSerializer
     queryset = Building.objects.all()
+    http_method_names = ['get', 'post', 'patch', 'delete']
+
+class EventView(viewsets.ModelViewSet):
+    serializer_class = EventCreateSerializer
+    queryset = Event.objects.all()
+    http_method_names = ['get', 'post', 'delete']
+
+    def create(self, request):
+        print(request.data)
+        room_id = request.data.get('room')
+
+        room = Room.objects.all().get(pk=room_id)
+        building = Building.objects.all().get(pk=room.building.id_text)
+
+        eventData = getEvents(building.id_text, room.room_num)
+
+        def sendRequests(data):
+            serializer = self.serializer_class(data=data)
+            if serializer.is_valid():
+                newEvent = Event(room = room, start_time = data.get('start_time'), \
+                    end_time = data.get('end_time'), event_name = data.get('event_name'))
+                newEvent.save()
+                return Response(data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        remainingEvents = len(eventData)
+        sentRequests = Response(None, status=status.HTTP_204_NO_CONTENT)
+
+        while remainingEvents > 0:
+            data = request.data.copy()
+            data.update(eventData[remainingEvents-1])
+            remainingEvents -= 1
+            sentRequests = sendRequests(data)
+        
+        summary = QueryDict('', mutable=True)
+        summary.update({
+            "events written": len(eventData)
+        })
+        
+        return Response(summary, status=status.HTTP_201_CREATED)
+
+    def list(self, requests):
+        queryset = Event.objects.all()
+        serializer = EventViewSerializer(queryset, many=True)
+        return Response(serializer.data)

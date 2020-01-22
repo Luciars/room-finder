@@ -21,6 +21,7 @@ from roomRequest import views
 router = routers.DefaultRouter()
 router.register(r'rooms', views.RoomView, 'room')
 router.register(r'buildings', views.BuildingView, 'building')
+router.register(r'events', views.EventView, 'event')
 
 urlpatterns = [
     path('admin/', admin.site.urls),

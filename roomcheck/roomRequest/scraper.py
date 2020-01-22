@@ -1,10 +1,13 @@
-import requests
 import datetime
+import requests
 from bs4 import BeautifulSoup
 
 _UTM_MOBILE_EVENTS = "https://m.utm.utoronto.ca/events.php?"
 
 def extractEvents(html: str, parser: str = "lxml") -> dict: 
+    if html == "":
+        return {}
+
     soup = BeautifulSoup(html, parser)
     table = soup.table
 
@@ -34,3 +37,17 @@ def query(building: str, room: str) -> str:
         return response._content
     response.close()
     return ""
+
+def dateParser(date):
+    start, end = date.split(" - ")
+    return start, end
+
+def getEvents(building: str, room: str):
+    eventData = extractEvents(query(building, room))
+    data = []
+    for time, eventName in eventData.items():
+        event = {}
+        event['start_time'], event['end_time'] = dateParser(time)
+        event['event_name'] = eventName
+        data.append(event)
+    return data

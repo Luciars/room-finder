@@ -12,7 +12,7 @@ class Room(models.Model):
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.building +  self.room_num
+        return "{}{}".format(self.building.id_text, self.room_num)
 
 class Event(models.Model):
     event_name = models.CharField(max_length=300)
