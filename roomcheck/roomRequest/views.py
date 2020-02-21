@@ -33,23 +33,27 @@ class EventView(viewsets.ModelViewSet):
             if serializer.is_valid():
                 newEvent = Event(room = room, start_time = data.get('start_time'), \
                     end_time = data.get('end_time'), event_name = data.get('event_name'))
-                newEvent.save()
+                if not Event.objects.filter(room = room, start_time = data.get('start_time')).exists():
+                    newEvent.save()
+                else:
+                    return Response(data, status=status.HTTP_409_CONFLICT)
                 return Response(data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+        summary = QueryDict('', mutable=True)
+        summary.update({
+            "events written": len(eventData)
+        })
         remainingEvents = len(eventData)
-        sentRequests = Response(None, status=status.HTTP_204_NO_CONTENT)
+        
+        if (remainingEvents == 0):
+            return Response(summary, status=status.HTTP_204_NO_CONTENT)
 
         while remainingEvents > 0:
             data = request.data.copy()
             data.update(eventData[remainingEvents-1])
             remainingEvents -= 1
-            sentRequests = sendRequests(data)
-        
-        summary = QueryDict('', mutable=True)
-        summary.update({
-            "events written": len(eventData)
-        })
+            sendRequests(data)
         
         return Response(summary, status=status.HTTP_201_CREATED)
 

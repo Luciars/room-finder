@@ -11,6 +11,9 @@ class Room(models.Model):
     room_num = models.CharField(max_length=5)
     building = models.ForeignKey(Building, on_delete=models.CASCADE)
 
+    def room_name(self):
+        return str(self)
+
     def __str__(self):
         return "{}{}".format(self.building.id_text, self.room_num)
 
@@ -19,6 +22,9 @@ class Event(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     room = models.ForeignKey(Room, on_delete=models.DO_NOTHING)
+
+    def room_name(self):
+        return str(self.room)
 
     def __str__(self):
         return self.event_name

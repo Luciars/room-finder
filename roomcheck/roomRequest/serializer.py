@@ -4,7 +4,7 @@ from .models import Room, Building, Event
 class RoomSerializer(serializers.ModelSerializer):
     class Meta:
         model = Room
-        fields = ('room_num', 'building')
+        fields = ['pk', 'room_num', 'building', 'room_name']
 
 class BuildingSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,7 +14,7 @@ class BuildingSerializer(serializers.ModelSerializer):
 class EventViewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Event
-        fields = ['room', 'event_name', 'start_time', 'end_time']
+        fields = ['room_name', 'room', 'event_name', 'start_time', 'end_time']
 
 class EventCreateSerializer(serializers.ModelSerializer):
     class Meta:

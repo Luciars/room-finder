@@ -11,7 +11,7 @@ def extractEvents(html: str, parser: str = "lxml") -> dict:
     soup = BeautifulSoup(html, parser)
     table = soup.table
 
-    if table == "":
+    if not table:
         return {}
 
     tableValues = table.findAll("div")
